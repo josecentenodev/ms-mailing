@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  ms-mailing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ms-mailing
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SMTP_HOST=smtp.office365.com
+      - SMTP_PORT=587
+      # Estas variables deben ser proporcionadas mediante un archivo .env o en tiempo de ejecución
+      # - SMTP_USER=your-outlook-email@outlook.com
+      # - SMTP_PASS=your-password
+      # - SMTP_FROM=your-outlook-email@outlook.com
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped 
