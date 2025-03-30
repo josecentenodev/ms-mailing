@@ -6,96 +6,84 @@ const logger = require('../utils/logger');
 
 /**
  * Envía un correo electrónico
- * @param {Object} req - Objeto de solicitud Express
- * @param {Object} res - Objeto de respuesta Express
- * @param {Function} next - Función next de Express
+ * @route POST /api/email/send
  */
-const sendEmail = async (req, res, next) => {
+const sendEmail = async (req, res) => {
   try {
     const { to, subject, text, html, attachments, from, cc, bcc } = req.body;
     
-    if (!to || !subject || (!text && !html)) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Faltan campos requeridos: to, subject, y text o html',
-      });
-    }
-
     const result = await emailService.sendEmail({
-      to,
-      subject,
-      text,
-      html,
-      attachments,
-      from,
-      cc,
-      bcc,
+      to, subject, text, html, attachments, from, cc, bcc
     });
 
     return res.status(200).json({
-      status: 'success',
+      success: true,
       message: 'Correo enviado exitosamente',
-      data: {
-        messageId: result.messageId,
-      },
+      data: result
     });
   } catch (error) {
-    logger.error(`Error en sendEmail: ${error.message}`);
-    next(error);
+    logger.error('Error en sendEmail:', error);
+    
+    // Distinguir entre errores de validación y otros errores
+    const isValidationError = error.message.includes('es requerido') || 
+                             error.message.includes('required');
+    
+    return res.status(isValidationError ? 400 : 500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
 /**
- * Envía un correo electrónico utilizando una plantilla
- * @param {Object} req - Objeto de solicitud Express
- * @param {Object} res - Objeto de respuesta Express
- * @param {Function} next - Función next de Express
+ * Envía un correo utilizando una plantilla
+ * @route POST /api/email/send-template
  */
-const sendTemplateEmail = async (req, res, next) => {
+const sendTemplateEmail = async (req, res) => {
   try {
-    const { 
-      to, 
-      subject, 
-      templateName, 
-      templateData, 
-      attachments, 
-      from, 
-      cc, 
-      bcc 
-    } = req.body;
+    const { to, subject, templateName, templateData, from, cc, bcc, attachments } = req.body;
     
-    if (!to || !subject || !templateName) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Faltan campos requeridos: to, subject, templateName',
-      });
-    }
-
     const result = await emailService.sendTemplateEmail({
-      to,
-      subject,
-      templateName,
-      templateData: templateData || {},
-      attachments,
-      from,
-      cc,
-      bcc,
+      to, subject, templateName, templateData, from, cc, bcc, attachments
     });
 
     return res.status(200).json({
-      status: 'success',
+      success: true,
       message: 'Correo con plantilla enviado exitosamente',
-      data: {
-        messageId: result.messageId,
-      },
+      data: result
     });
   } catch (error) {
-    logger.error(`Error en sendTemplateEmail: ${error.message}`);
-    next(error);
+    logger.error('Error en sendTemplateEmail:', error);
+    
+    // Distinguir entre errores de validación/plantilla y otros errores
+    const isClientError = error.message.includes('es requerido') || 
+                         error.message.includes('no encontrada') ||
+                         error.message.includes('required');
+    
+    return res.status(isClientError ? 400 : 500).json({
+      success: false,
+      message: error.message
+    });
   }
+};
+
+/**
+ * Verifica el estado del servicio de email
+ * @route GET /api/email/status
+ */
+const getStatus = (req, res) => {
+  const status = emailService.checkConfiguration();
+  
+  return res.status(status.configured ? 200 : 503).json({
+    success: status.configured,
+    status: status.configured ? 'operational' : 'misconfigured',
+    provider: status.provider,
+    issues: status.issues
+  });
 };
 
 module.exports = {
   sendEmail,
   sendTemplateEmail,
+  getStatus
 }; 

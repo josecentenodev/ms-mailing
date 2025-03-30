@@ -1,6 +1,9 @@
 # Imagen base
 FROM node:18-alpine
 
+# Instalar pnpm
+RUN npm install -g pnpm
+
 # Crear directorio de trabajo
 WORKDIR /app
 
@@ -10,8 +13,8 @@ ENV NODE_ENV=production
 # Copiar archivos de configuración de paquetes
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm ci --only=production
+# Instalar dependencias con pnpm
+RUN pnpm install --prod
 
 # Crear directorio para logs
 RUN mkdir -p logs
