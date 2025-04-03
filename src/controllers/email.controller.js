@@ -10,10 +10,16 @@ const logger = require('../utils/logger');
  */
 const sendEmail = async (req, res) => {
   try {
-    const { to, subject, text, html, attachments, from, cc, bcc } = req.body;
+    const { to, subject, text, html, attachments, cc, bcc } = req.body;
     
     const result = await emailService.sendEmail({
-      to, subject, text, html, attachments, from, cc, bcc
+      to, 
+      subject, 
+      text, 
+      html, 
+      attachments, 
+      cc, 
+      bcc
     });
 
     return res.status(200).json({
@@ -41,10 +47,16 @@ const sendEmail = async (req, res) => {
  */
 const sendTemplateEmail = async (req, res) => {
   try {
-    const { to, subject, templateName, templateData, from, cc, bcc, attachments } = req.body;
+    const { to, subject, templateName, templateData, cc, bcc, attachments } = req.body;
     
     const result = await emailService.sendTemplateEmail({
-      to, subject, templateName, templateData, from, cc, bcc, attachments
+      to, 
+      subject, 
+      templateName, 
+      templateData, 
+      cc, 
+      bcc, 
+      attachments
     });
 
     return res.status(200).json({
@@ -78,7 +90,8 @@ const getStatus = (req, res) => {
     success: status.configured,
     status: status.configured ? 'operational' : 'misconfigured',
     provider: status.provider,
-    issues: status.issues
+    issues: status.issues,
+    from_email: process.env.SENDGRID_FROM_EMAIL || 'no configurado'
   });
 };
 
